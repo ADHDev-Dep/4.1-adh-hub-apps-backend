@@ -89,8 +89,14 @@ export class FilesService {
   }
 
   private parseDateToYearMonth(dateStr: string) {
-    const date = new Date(dateStr);
-    const year = date.getFullYear();
+    const [yearStr, monthStr, dayStr] = dateStr.split('-');
+
+    const year = parseInt(yearStr, 10);
+    const monthIndex = parseInt(monthStr, 10) - 1;
+    const day = parseInt(dayStr, 10);
+
+    const date = new Date(year, monthIndex, day);
+
     const monthNames = [
       '01. Enero',
       '02. Febrero',
