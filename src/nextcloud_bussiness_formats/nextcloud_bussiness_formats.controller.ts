@@ -8,16 +8,12 @@ export class NextcloudBussinessFormatsController {
     private readonly nextcloudBussinessFormatService: NextcloudBussinessFormatsService,
   ) {}
 
-  // obtener carpetas
-  @Get('folders')
-  getFolders() {
-    return this.nextcloudBussinessFormatService.getFolders();
+  // devuelve todo el arbol: carpetas, subcarpetas y archivos
+  @Get('tree')
+  getTree() {
+    return this.nextcloudBussinessFormatService.getRootTree();
   }
-  // obtener archivos de una carpeta
-  @Get('folder/:name')
-  getFiles(@Param('name') name: string) {
-    return this.nextcloudBussinessFormatService.getFilesFromFolder(name);
-  }
+
   // descarga d archivo y visualizacion
   @Get('download/:folder/:file')
   async downloadFile(
@@ -29,6 +25,7 @@ export class NextcloudBussinessFormatsController {
       folder,
       file,
     );
+    res.setHeader('Content-Type', 'application/octet-stream');
     res.send(buffer);
   }
 }

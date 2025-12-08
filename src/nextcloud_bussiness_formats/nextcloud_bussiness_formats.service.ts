@@ -36,35 +36,55 @@ export class NextcloudBussinessFormatsService {
   }
 
   //traer carpetas de nextcloud
-  async getFolders(): Promise<NextcloudFolder[]> {
-    const contents = (await this.client.getDirectoryContents(
-      this.ROOT,
-    )) as webDavItem[];
-
-    return contents
-      .filter((item) => item.type === 'directory')
-      .map((folder) => ({
-        name: folder.basename,
-        path: folder.filename,
-      }));
-  }
-
-  // traer archivos de una carpeta
-  async getFilesFromFolder(folder: string): Promise<NextcloudFolder[]> {
-    const path = `${this.ROOT}/${folder}`;
-
+  async getFolderTree(path: string): Promise<NextcloudFolder> {
     const contents = (await this.client.getDirectoryContents(
       path,
     )) as webDavItem[];
 
-    return contents
+    const files = contents
       .filter((item) => item.type === 'file')
       .map((file) => ({
         name: file.basename,
         path: file.filename,
-        mime: file.mime,
-        size: file.size,
       }));
+
+    const directories = contents.filter((item) => item.type === 'directory');
+
+    const children: NextcloudFolder[] = [];
+
+    for (const dir of directories) {
+      const childTree = await this.getFolderTree(dir.filename);
+      children.push(childTree);
+    }
+
+    return {
+      name: path.split('/').pop() || path,
+      path,
+      files,
+      children,
+    };
+  }
+
+  // // traer archivos de una carpeta
+  // async getFilesFromFolder(folder: string): Promise<NextcloudFolder[]> {
+  //   const path = `${this.ROOT}/${folder}`;
+
+  //   const contents = (await this.client.getDirectoryContents(
+  //     path,
+  //   )) as webDavItem[];
+
+  //   return contents
+  //     .filter((item) => item.type === 'file')
+  //     .map((file) => ({
+  //       name: file.basename,
+  //       path: file.filename,
+  //       mime: file.mime,
+  //       size: file.size,
+  //     }));
+  // }
+
+  async getRootTree(): Promise<NextcloudFolder> {
+    return this.getFolderTree(this.ROOT);
   }
 
   async getFileBuffer(folder: string, file: string) {
