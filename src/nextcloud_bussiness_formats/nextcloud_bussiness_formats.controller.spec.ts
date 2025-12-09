@@ -9,7 +9,9 @@ describe('NextcloudBussinessFormatsController', () => {
       controllers: [NextcloudBussinessFormatsController],
     }).compile();
 
-    controller = module.get<NextcloudBussinessFormatsController>(NextcloudBussinessFormatsController);
+    controller = module.get<NextcloudBussinessFormatsController>(
+      NextcloudBussinessFormatsController,
+    );
   });
 
   it('should be defined', () => {

@@ -9,7 +9,9 @@ describe('NextcloudBussinessFormatsService', () => {
       providers: [NextcloudBussinessFormatsService],
     }).compile();
 
-    service = module.get<NextcloudBussinessFormatsService>(NextcloudBussinessFormatsService);
+    service = module.get<NextcloudBussinessFormatsService>(
+      NextcloudBussinessFormatsService,
+    );
   });
 
   it('should be defined', () => {

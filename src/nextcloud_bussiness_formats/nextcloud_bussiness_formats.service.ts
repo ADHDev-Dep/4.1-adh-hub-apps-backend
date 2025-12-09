@@ -35,8 +35,13 @@ export class NextcloudBussinessFormatsService {
     this.logger.log('Cliente webdav nextcloud inicializado correctamente');
   }
 
-  //traer carpetas de nextcloud
+  // extraer capretas de nextcloud sin la ruta root
   async getFolderTree(path: string): Promise<NextcloudFolder> {
+    const cleanPath = path
+      .replace(/^\//, '') // quita slash inicial
+      .replace(this.ROOT + '/', '') // quita "ROOT/..."
+      .replace(this.ROOT, ''); // quita "ROOT" solo
+
     const contents = (await this.client.getDirectoryContents(
       path,
     )) as webDavItem[];
@@ -45,7 +50,10 @@ export class NextcloudBussinessFormatsService {
       .filter((item) => item.type === 'file')
       .map((file) => ({
         name: file.basename,
-        path: file.filename,
+        path: file.filename
+          .replace(/^\//, '')
+          .replace(this.ROOT + '/', '')
+          .replace(this.ROOT, ''),
       }));
 
     const directories = contents.filter((item) => item.type === 'directory');
@@ -58,30 +66,12 @@ export class NextcloudBussinessFormatsService {
     }
 
     return {
-      name: path.split('/').pop() || path,
-      path,
+      name: cleanPath.split('/').pop() || cleanPath,
+      path: cleanPath,
       files,
       children,
     };
   }
-
-  // // traer archivos de una carpeta
-  // async getFilesFromFolder(folder: string): Promise<NextcloudFolder[]> {
-  //   const path = `${this.ROOT}/${folder}`;
-
-  //   const contents = (await this.client.getDirectoryContents(
-  //     path,
-  //   )) as webDavItem[];
-
-  //   return contents
-  //     .filter((item) => item.type === 'file')
-  //     .map((file) => ({
-  //       name: file.basename,
-  //       path: file.filename,
-  //       mime: file.mime,
-  //       size: file.size,
-  //     }));
-  // }
 
   async getRootTree(): Promise<NextcloudFolder> {
     return this.getFolderTree(this.ROOT);
