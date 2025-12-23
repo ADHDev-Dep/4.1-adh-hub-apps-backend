@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { FilesModule } from './files/files.module';
 import { ConfigModule } from '@nestjs/config';
 import { NextcloudBussinessFormatsModule } from './nextcloud_bussiness_formats/nextcloud_bussiness_formats.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { NextcloudBussinessFormatsModule } from './nextcloud_bussiness_formats/n
     }),
     FilesModule,
     NextcloudBussinessFormatsModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
