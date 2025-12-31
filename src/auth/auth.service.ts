@@ -28,7 +28,7 @@ export class AuthService {
       .single<UserProfile>();
 
     if (profileError) {
-      console.log('DETALLES DEL ERROR:', profileError); // <--- Revisa esto en tu terminal de NestJS
+      console.log('Error details:', profileError); // <--- Revisa esto en tu terminal de NestJS
       throw new UnauthorizedException(`Error DB: ${profileError.message}`);
     }
 
