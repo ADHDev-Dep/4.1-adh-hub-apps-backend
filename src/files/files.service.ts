@@ -2,12 +2,18 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import axios from 'axios';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 import { UploadDto } from './dto/upload.dto';
+// import { response } from 'express';
 
 @Injectable()
 export class FilesService {
@@ -64,9 +70,10 @@ export class FilesService {
           method: 'PROPFIND',
           url,
           auth: this.auth,
-          validateStatus: () => true,
+          validateStatus: (status) => status < 500,
         });
 
+        // si la carpeta no existe se crea
         if (res.status === 404) {
           await axios.request({
             method: 'MKCOL',
@@ -118,7 +125,7 @@ export class FilesService {
   async handleUpload(
     body: UploadDto,
     file: Express.Multer.File,
-  ): Promise<{ success: boolean; path?: string; error?: string }> {
+  ): Promise<{ success: boolean; path?: string }> {
     if (!file) throw new BadRequestException('Archivo no recibido');
 
     const { folio, provider, fileType, date } = body;
@@ -129,8 +136,11 @@ export class FilesService {
     // 1. asegura la estructura iterando MKCOL por cada segmento
     await this.ensureNestedPath(baseRelative);
 
+    const fileExtension = (
+      path.extname(file.originalname) || '.pdf'
+    ).toLowerCase();
     //2. subir el archivo al directorio final
-    const safeFileName = `${fileType} - ${provider} - ${folio}${path.extname(file.originalname) || '.pdf'}`;
+    const safeFileName = `${fileType} - ${provider} - ${folio}${fileExtension}`;
 
     // guardamos temporalmente
     const tmpPath = path.join(os.tmpdir(), `${Date.now()}-${safeFileName}`);
@@ -145,25 +155,33 @@ export class FilesService {
       const contentType: string = file.mimetype || 'application/pdf';
       this.logger.log(`Intentando subir a: ${targetUrl}`);
 
-      await axios.put(targetUrl, stream, {
+      const response = await axios.put(targetUrl, stream, {
         auth: this.auth,
         headers: { 'Content-Type': contentType },
         maxBodyLength: Infinity,
-        validateStatus: () => true,
+        // validateStatus: () => true,
       });
-      fs.unlinkSync(tmpPath);
-      return { success: true, path: `${baseRelative}/${safeFileName}` };
+      // si webdav responde 201(creado) o 204(actualizado)
+      if (response.status === 201 || response.status === 204) {
+        this.logger.log(`Archivo creado con éxito: ${safeFileName}`);
+        // fs.unlinkSync(tmpPath);
+        return { success: true, path: `${baseRelative}/${safeFileName}` };
+      } else {
+        throw new Error(`Error inesperado: ${response.status}`);
+      }
+
+      // return { success: true, path: `${baseRelative}/${safeFileName}` };
     } catch (err) {
       this.logger.error(
         `Error en PUT: ${err.response?.status} ${err.response?.statusText}`,
       );
-
-      this.logger.error('Error subiendo archivo: ' + err);
+      throw new InternalServerErrorException(
+        err.response?.data ||
+          `Fallo al subir archivo a Nextcloud: ${err.message}`,
+      );
+    } finally {
+      // Limpiar siempre el temporal
       if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
-      return {
-        success: false,
-        error: err instanceof Error ? err.message : String(err),
-      };
     }
   }
 }
