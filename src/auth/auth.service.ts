@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { createClient } from '@supabase/supabase-js';
 import { UserProfile } from './interfaces/user-profile.interface';
+// import { error } from 'console';
 
 @Injectable()
 export class AuthService {
@@ -36,5 +37,16 @@ export class AuthService {
       session: data.session,
       user: profile,
     };
+  }
+
+  async getFullProfile(userId: string) {
+    const { data, error } = await this.supabase
+      .schema('app')
+      .from('users')
+      .select('id, name, paternal_surname, maternal_surname, role')
+      .eq('id', userId)
+      .single<UserProfile>();
+    if (error) throw new UnauthorizedException('Perfil no encontrado.');
+    return data;
   }
 }

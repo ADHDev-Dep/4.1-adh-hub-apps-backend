@@ -17,6 +17,6 @@ export class AuthController {
   @UseGuards(SupabaseGuard)
   @Get('profile')
   getProfile(@Req() req: AuthRequest) {
-    return req.user;
+    return this.authService.getFullProfile(req.user.id);
   }
 }
