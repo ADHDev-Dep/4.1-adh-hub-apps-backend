@@ -4,14 +4,16 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { createClient } from '@supabase/supabase-js';
+// import { createClient } from '@supabase/supabase-js';
 import { Request } from 'express';
+import { SupabaseService } from './supabase.service';
 @Injectable()
 export class SupabaseGuard implements CanActivate {
-  private supabase = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY!,
-  );
+  // private supabase = createClient(
+  //   process.env.SUPABASE_URL!,
+  //   process.env.SUPABASE_ANON_KEY!,
+  // );
+  constructor(private readonly supabase: SupabaseService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
@@ -23,7 +25,7 @@ export class SupabaseGuard implements CanActivate {
     }
 
     const token = authHeader.replace('Bearer ', '');
-    const { data, error } = await this.supabase.auth.getUser(token);
+    const { data, error } = await this.supabase.anon.auth.getUser(token);
     if (error || !data.user) {
       throw new UnauthorizedException('Invalid Token');
     }

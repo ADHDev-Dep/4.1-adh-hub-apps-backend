@@ -1,17 +1,20 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { createClient } from '@supabase/supabase-js';
+// import { createClient } from '@supabase/supabase-js';
 import { UserProfile } from './interfaces/user-profile.interface';
+import { SupabaseService } from './supabase.service';
 // import { error } from 'console';
 
 @Injectable()
 export class AuthService {
-  private supabase = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY!,
-  );
+  // private supabase = createClient(
+  //   process.env.SUPABASE_URL!,
+  //   process.env.SUPABASE_ANON_KEY!,
+  // );
+
+  constructor(private readonly supabase: SupabaseService) {}
 
   async login(email: string, password: string) {
-    const { data, error } = await this.supabase.auth.signInWithPassword({
+    const { data, error } = await this.supabase.anon.auth.signInWithPassword({
       email,
       password,
     });
@@ -21,7 +24,7 @@ export class AuthService {
 
     const userId = data.user.id;
 
-    const { data: profile, error: profileError } = await this.supabase
+    const { data: profile, error: profileError } = await this.supabase.anon
       .schema('app')
       .from('users')
       .select('id, name, paternal_surname, maternal_surname, role')
@@ -40,7 +43,7 @@ export class AuthService {
   }
 
   async getFullProfile(userId: string) {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.supabase.anon
       .schema('app')
       .from('users')
       .select('id, name, paternal_surname, maternal_surname, role')

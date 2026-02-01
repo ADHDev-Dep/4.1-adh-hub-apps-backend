@@ -1,7 +1,8 @@
 import { Controller, Get, Post, Body, UseGuards, Req } from '@nestjs/common';
-import type { AuthRequest } from 'src/types/auth-request';
+// import type { AuthRequest } from 'src/types/auth-request';
 import { SupabaseGuard } from './supabase.guard';
 import { AuthService } from './auth.service';
+import * as express from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -16,7 +17,7 @@ export class AuthController {
   // perfil protegido requiere token
   @UseGuards(SupabaseGuard)
   @Get('profile')
-  getProfile(@Req() req: AuthRequest) {
-    return this.authService.getFullProfile(req.user.id);
+  getProfile(@Req() req: express.Request) {
+    return this.authService.getFullProfile(req.user!.id);
   }
 }
